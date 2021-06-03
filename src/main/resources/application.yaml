@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    username: user-roles
+    password: Bpf68bhicEdMwyxt
+    url: jdbc:mysql://42.193.130.123:3306/user-roles?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
+    driver-class-name: com.mysql.jdbc.Driver

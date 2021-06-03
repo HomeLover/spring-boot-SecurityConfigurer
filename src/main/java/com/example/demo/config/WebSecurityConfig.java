@@ -1,7 +1,10 @@
 package com.example.demo.config;
 
+import com.example.demo.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -9,52 +12,38 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Autowired
+    UserService userService;
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
-        // 不对密码进行加密
+    BCryptPasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
     }
-
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("root").password("123").roles("ADMIN","DBA")
-                .and()
-                .withUser("admin").password("123").roles("ADMIN","USER")
-                .and()
-                .withUser("WylYounng").password("123").roles("USER");
-
-                // 首先配置了三个用户，root用户具备ADMIN和DBC角色
-                // admin用户 具备 ADMIN 和 USER角色
-                // Wylyounng 具备 ADMIN 和 USER角色
-
+    //授权,放行adduser路由
+    protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder.userDetailsService(userService);
     }
-
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeRequests() // authorizeRequests()方法开启HttpSecurity的配置
-                .antMatchers("/admin/**") //所有经过admin路由的,都需要有ADMIN权限即ADMIN角色
-                .hasRole("ADMIN")
-                .antMatchers("/user/**")
-                .access("hasAnyRole('ADMIN','USER')")
-                .antMatchers("/db/**")
-                .access("hasRole('ADMIN') and hasRole('DBC')")
+        httpSecurity.authorizeRequests()
+                .antMatchers("/user/**").hasRole("user")
+                .antMatchers("/root/**").hasRole("root")
+                .antMatchers("/db/**").hasRole("db")
                 .anyRequest()
                 .authenticated()
                 .and()
                 .formLogin()
-                .loginProcessingUrl("/login")
-                .permitAll()
+                .loginProcessingUrl("/login").permitAll()
                 .and()
-                .csrf()
-                .disable();
-
+                .csrf().disable();
     }
 }
