@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableMBeanExport;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.access.vote.RoleHierarchyVoter;
 import org.springframework.security.authentication.*;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -43,26 +47,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setHideUserNotFoundExceptions(false);
-        provider.setUserDetailsService(userService);
-        provider.setPasswordEncoder(new BCryptPasswordEncoder(){});
-        return provider;
-    }
     @Override
     //授权,放行adduser路由
     protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder.userDetailsService(userService);
-        authenticationManagerBuilder.authenticationProvider(authenticationProvider());
     }
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
                 .antMatchers("/user/**").hasRole("user")
-                .antMatchers("/root/**").hasRole("root")
-                .antMatchers("/db/**").hasRole("db")
+                .antMatchers("/admin/**").hasRole("admin")
+                .antMatchers("/db/**").hasRole("dba")
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -115,5 +110,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .and()
                 .csrf().disable();
+    }
+    @Bean
+    public RoleHierarchyVoter roleHierarchyVoter() {
+        return new RoleHierarchyVoter(roleHierarchy());
+    }
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        String hierarchy = "ROLE_dba > ROLE_admin > ROLE_user";
+        roleHierarchy.setHierarchy(hierarchy);
+        return roleHierarchy;
+    }
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setHideUserNotFoundExceptions(false);
+        provider.setUserDetailsService(userService);
+        provider.setPasswordEncoder(new BCryptPasswordEncoder(){});
+        return provider;
     }
 }

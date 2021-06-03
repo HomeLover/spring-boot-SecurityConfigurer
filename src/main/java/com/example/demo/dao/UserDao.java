@@ -14,6 +14,6 @@ public interface UserDao {
     int addUser(User user);
     @Select("select * from user where username = #{username}")
     User loadUserByUsername(String username);
-    @Select("select * from role r,user_role ur where r.id = ur.uid and ur.uid = #{id}")
+    @Select("select * from role r,user_role ur where r.id = ur.rid and ur.uid = #{id}")
     List<Role> getUserRolesByUid(Integer id);
 }
