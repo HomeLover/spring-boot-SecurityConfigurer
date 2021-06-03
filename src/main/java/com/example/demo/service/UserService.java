@@ -4,6 +4,8 @@ import com.example.demo.dao.UserDao;
 import com.example.demo.model.Role;
 import com.example.demo.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,10 +27,11 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userDao.loadUserByUsername(username);
         if (user == null) {
-            throw new UsernameNotFoundException("账户不存在!");
+            throw new BadCredentialsException("账户不存在!");
+        } else {
+            user.setRoles(userDao.getUserRolesByUid(user.getId()));
+            return user;
         }
-        user.setRoles(userDao.getUserRolesByUid(user.getId()));
-        return user;
     }
 
     public int addUser(User user) {
