@@ -55,6 +55,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
+                .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
+                    @Override
+                    public <O extends FilterSecurityInterceptor> O postProcess(O object) {
+                        object.setSecurityMetadataSource(cfisms());
+                        object.setAccessDecisionManager(cadm());
+                        return object;
+                    }
+                })
                 .antMatchers("/user/**").hasRole("user")
                 .antMatchers("/admin/**").hasRole("admin")
                 .antMatchers("/db/**").hasRole("dba")
@@ -129,5 +137,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         provider.setUserDetailsService(userService);
         provider.setPasswordEncoder(new BCryptPasswordEncoder(){});
         return provider;
+    }
+    @Bean
+    CustomFilerInvocationSecurityMetadataSource cfisms() {
+        return new CustomFilerInvocationSecurityMetadataSource();
+    }
+    @Bean
+    CustomAccessDecisionManager cadm() {
+        return new CustomAccessDecisionManager();
     }
 }
