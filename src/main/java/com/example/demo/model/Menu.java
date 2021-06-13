@@ -2,9 +2,10 @@ package com.example.demo.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Menu {
+public class Menu implements Serializable {
     private Integer id;
     private String pattern;
     private List<Role> roles;
